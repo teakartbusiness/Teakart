@@ -18,7 +18,7 @@ function allCapsAccess(userId: string, email: string | null, isCeo: boolean): Vi
  * can be reintroduced later without rewiring every page guard.)
  *
  * Use from server components (page guards) and API route handlers. Middleware
- * has its own Supabase client and resolves access inline — see middleware.ts.
+ * has its own Supabase client and resolves access inline — see proxy.ts.
  */
 
 export type ViewerAccess = {
