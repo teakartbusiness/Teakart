@@ -1,0 +1,409 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * THEME TOKEN MAP
+ * ---------------
+ * Every color and font used in the UI must come from a variable here.
+ * Do not hardcode Tailwind shades (bg-red-100, text-gray-500, …) in components.
+ *
+ * Defaults under `:root` below MUST stay in sync with src/theme.config.ts —
+ * Tailwind v4 reads CSS-variable defaults at build time, so we keep the
+ * canonical values in both files. When changing a default, edit both.
+ *
+ * Admin overrides at /admin/customize are written to the theme_settings table
+ * and injected as a <style> at the top of <body> by the root layout, so they
+ * win the cascade over the defaults declared here.
+ */
+
+@theme inline {
+  /* Surfaces */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-sunken: var(--surface-sunken);
+
+  /* Text */
+  --color-text-strong: var(--text-strong);
+  --color-text-subtle: var(--text-subtle);
+
+  /* Fonts */
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-display: var(--font-display);
+  --font-heading: var(--font-display);
+
+  /* Base type scale (controls how big text feels site-wide). */
+  --text-base-size: var(--base-font-size);
+
+  /* shadcn semantic tokens (kept for compatibility with shadcn components) */
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-soft: var(--destructive-soft);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-ring: var(--warning-ring);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+
+  /* Order status colors — each status has bg / fg / ring */
+  --color-status-pending-bg: var(--status-pending-bg);
+  --color-status-pending-fg: var(--status-pending-fg);
+  --color-status-pending-ring: var(--status-pending-ring);
+  --color-status-confirmed-bg: var(--status-confirmed-bg);
+  --color-status-confirmed-fg: var(--status-confirmed-fg);
+  --color-status-confirmed-ring: var(--status-confirmed-ring);
+  --color-status-shipped-bg: var(--status-shipped-bg);
+  --color-status-shipped-fg: var(--status-shipped-fg);
+  --color-status-shipped-ring: var(--status-shipped-ring);
+  --color-status-delivered-bg: var(--status-delivered-bg);
+  --color-status-delivered-fg: var(--status-delivered-fg);
+  --color-status-delivered-ring: var(--status-delivered-ring);
+  --color-status-cancelled-bg: var(--status-cancelled-bg);
+  --color-status-cancelled-fg: var(--status-cancelled-fg);
+  --color-status-cancelled-ring: var(--status-cancelled-ring);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  /* Type scale */
+  --base-font-size: 17px;
+
+  /* Font families (overridden at runtime when admin picks a Google font) */
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
+  --font-display: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+
+  /* Core surfaces — warm cream tuned to harmonize with the logo */
+  --background: oklch(0.955 0.018 78);
+  --foreground: oklch(0.28 0.04 55);
+  --surface-muted: oklch(0.93 0.022 75);
+  --surface-sunken: oklch(0.90 0.026 72);
+
+  /* Text */
+  --text-strong: oklch(0.22 0.045 50);
+  --text-subtle: oklch(0.55 0.03 60);
+
+  --primary: oklch(0.30 0.045 50);
+  --primary-foreground: oklch(0.96 0.018 80);
+  --muted: oklch(0.92 0.024 75);
+  --muted-foreground: oklch(0.48 0.035 55);
+  --accent: oklch(0.91 0.035 75);
+  --accent-foreground: oklch(0.28 0.045 55);
+  --logo-color: oklch(0.30 0.045 50);
+
+  /* Shadcn extras derive from the semantic tokens above so admin theme
+     changes propagate to every component (cards, popovers, selects, etc.)
+     without each preset having to override them explicitly. */
+  --card: var(--surface-muted);
+  --card-foreground: var(--foreground);
+  --popover: var(--surface-muted);
+  --popover-foreground: var(--foreground);
+  --secondary: var(--surface-sunken);
+  --secondary-foreground: var(--foreground);
+
+  --destructive: oklch(0.56 0.20 28);
+  --destructive-foreground: oklch(0.96 0.018 80);
+  --destructive-soft: oklch(0.93 0.06 30);
+
+  --success: oklch(0.60 0.14 145);
+  --success-foreground: oklch(0.96 0.018 80);
+  --success-soft: oklch(0.92 0.06 140);
+
+  --warning: oklch(0.66 0.15 75);
+  --warning-foreground: oklch(0.22 0.06 60);
+  --warning-soft: oklch(0.93 0.08 85);
+  --warning-ring: oklch(0.82 0.10 75);
+
+  --border: oklch(0.86 0.026 70);
+  --border-strong: oklch(0.74 0.032 65);
+  --input: var(--border);
+  --ring: oklch(0.62 0.03 60);
+  --chart-1: oklch(0.74 0.07 60);
+  --chart-2: oklch(0.58 0.06 60);
+  --chart-3: oklch(0.46 0.06 55);
+  --chart-4: oklch(0.36 0.05 50);
+  --chart-5: oklch(0.26 0.04 50);
+  --radius: 0.75rem;
+  --sidebar: oklch(0.93 0.022 75);
+  --sidebar-foreground: oklch(0.28 0.04 55);
+  --sidebar-primary: oklch(0.30 0.045 50);
+  --sidebar-primary-foreground: oklch(0.96 0.018 80);
+  --sidebar-accent: oklch(0.91 0.035 75);
+  --sidebar-accent-foreground: oklch(0.28 0.045 55);
+  --sidebar-border: oklch(0.86 0.026 70);
+  --sidebar-ring: oklch(0.62 0.03 60);
+
+  /* Order status palettes — warm-tinted to blend with the cream surface */
+  --status-pending-bg: oklch(0.93 0.08 85);
+  --status-pending-fg: oklch(0.40 0.13 70);
+  --status-pending-ring: oklch(0.86 0.10 80);
+  --status-confirmed-bg: oklch(0.92 0.05 235);
+  --status-confirmed-fg: oklch(0.40 0.15 250);
+  --status-confirmed-ring: oklch(0.84 0.07 235);
+  --status-shipped-bg: oklch(0.91 0.05 195);
+  --status-shipped-fg: oklch(0.42 0.13 195);
+  --status-shipped-ring: oklch(0.84 0.07 195);
+  --status-delivered-bg: oklch(0.92 0.06 145);
+  --status-delivered-fg: oklch(0.40 0.13 150);
+  --status-delivered-ring: oklch(0.83 0.08 145);
+  --status-cancelled-bg: oklch(0.92 0.06 28);
+  --status-cancelled-fg: oklch(0.45 0.18 28);
+  --status-cancelled-ring: oklch(0.84 0.08 30);
+}
+
+/*
+ * Dark mode — applied when <html class="dark"> is set. Warm dark coffee
+ * to complement the brand's cream + brown palette. No harsh contrasts.
+ * Keep in sync with COLORS_DARK in src/theme.config.ts.
+ */
+.dark {
+  /* Brand */
+  --primary:                oklch(0.88 0.018 75);
+  --primary-foreground:     oklch(0.20 0.008 75);
+  --accent:                 oklch(0.28 0.008 70);
+  --accent-foreground:      oklch(0.92 0.006 80);
+  --logo-color:             oklch(0.93 0.008 80);
+
+  /* Surface — near-neutral gray with a faint warm bias */
+  --background:             oklch(0.18 0.005 75);
+  --foreground:             oklch(0.94 0.004 80);
+  --surface-muted:          oklch(0.21 0.006 75);
+  --surface-sunken:         oklch(0.24 0.007 75);
+  --text-strong:            oklch(0.97 0.003 80);
+  --text-subtle:            oklch(0.62 0.005 75);
+  --muted:                  oklch(0.27 0.007 75);
+  --muted-foreground:       oklch(0.74 0.004 80);
+  --border:                 oklch(0.32 0.008 75);
+  --border-strong:          oklch(0.43 0.010 75);
+
+  /* Shadcn extras derive from the semantic tokens above. */
+  --card:                   var(--surface-muted);
+  --card-foreground:        var(--foreground);
+  --popover:                var(--surface-muted);
+  --popover-foreground:     var(--foreground);
+  --secondary:              var(--surface-sunken);
+  --secondary-foreground:   var(--foreground);
+  --input:                  var(--border);
+  --ring:                   oklch(0.62 0.04 60);
+
+  /* Semantic */
+  --destructive:            oklch(0.65 0.20 28);
+  --destructive-foreground: oklch(0.20 0.005 75);
+  --destructive-soft:       oklch(0.30 0.10 28);
+  --success:                oklch(0.70 0.15 145);
+  --success-foreground:     oklch(0.20 0.005 75);
+  --success-soft:           oklch(0.28 0.08 145);
+  --warning:                oklch(0.74 0.16 75);
+  --warning-foreground:     oklch(0.20 0.005 75);
+  --warning-soft:           oklch(0.28 0.10 85);
+  --warning-ring:           oklch(0.55 0.15 80);
+
+  /* Charts */
+  --chart-1: oklch(0.78 0.06 70);
+  --chart-2: oklch(0.65 0.05 60);
+  --chart-3: oklch(0.52 0.05 55);
+  --chart-4: oklch(0.40 0.04 50);
+  --chart-5: oklch(0.32 0.03 50);
+
+  /* Sidebar (admin) */
+  --sidebar:                       oklch(0.22 0.020 50);
+  --sidebar-foreground:            oklch(0.93 0.025 78);
+  --sidebar-primary:               oklch(0.85 0.045 78);
+  --sidebar-primary-foreground:    oklch(0.20 0.035 50);
+  --sidebar-accent:                oklch(0.28 0.035 60);
+  --sidebar-accent-foreground:     oklch(0.92 0.025 75);
+  --sidebar-border:                oklch(0.32 0.026 50);
+  --sidebar-ring:                  oklch(0.62 0.04 60);
+
+  /* Order status — keep hue, lift fg/ring, sink bg for dark surfaces */
+  --status-pending-bg:      oklch(0.28 0.08 85);
+  --status-pending-fg:      oklch(0.90 0.10 85);
+  --status-pending-ring:    oklch(0.42 0.10 85);
+  --status-confirmed-bg:    oklch(0.27 0.08 240);
+  --status-confirmed-fg:    oklch(0.85 0.10 240);
+  --status-confirmed-ring:  oklch(0.40 0.10 240);
+  --status-shipped-bg:      oklch(0.28 0.08 195);
+  --status-shipped-fg:      oklch(0.85 0.10 195);
+  --status-shipped-ring:    oklch(0.40 0.10 195);
+  --status-delivered-bg:    oklch(0.28 0.08 150);
+  --status-delivered-fg:    oklch(0.85 0.10 150);
+  --status-delivered-ring:  oklch(0.40 0.10 150);
+  --status-cancelled-bg:    oklch(0.30 0.09 28);
+  --status-cancelled-fg:    oklch(0.85 0.12 28);
+  --status-cancelled-ring:  oklch(0.45 0.12 28);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    font-size: var(--base-font-size);
+    /* Soft, premium anchor / programmatic scrolling. Cancelled when the user
+       sets prefers-reduced-motion (see media query below). */
+    scroll-behavior: smooth;
+    /* Always reserve the scrollbar gutter so opening a dropdown/dialog (which
+       locks body scroll) doesn't remove the scrollbar and shift the page. */
+    scrollbar-gutter: stable;
+    @apply font-sans;
+  }
+  /* Aside: scroll-padding so anchored navigation doesn't tuck the target
+     under the sticky header. */
+  html {
+    scroll-padding-top: 5rem;
+  }
+  body {
+    @apply bg-background text-foreground;
+    /* Optimize font rendering on retina / high-refresh displays. */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Native form controls and scrollbars follow the active mode. Without
+     this, native <select> dropdown options render in OS-default colors. */
+  :root { color-scheme: light; }
+  .dark { color-scheme: dark; }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+  }
+
+  /*
+   * Default transition feel: snappy ease-out, ~160ms. Tailwind utilities
+   * like `transition-colors` and `transition-all` use the variables below;
+   * shorter/cleaner than the framework default and reads as "premium" on
+   * 144Hz displays.
+   */
+  *,
+  *::before,
+  *::after {
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+    transition-duration: 180ms;
+  }
+
+  /* Respect user preference — kill animations for vestibular safety. */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /*
+   * Tailwind's preflight resets interactive elements to `cursor: default`.
+   * Override so every clickable thing shows the pointer — applies to <button>,
+   * <a>, <select>, and anything with role="button". Disabled controls keep
+   * `not-allowed`.
+   */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  a[href],
+  select:not(:disabled),
+  summary,
+  label[for] {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [aria-disabled="true"],
+  select:disabled {
+    cursor: not-allowed;
+  }
+
+  /* Subtle, consistent press feedback on buttons + links that look like buttons. */
+  button:not(:disabled):active,
+  [role="button"]:not([aria-disabled="true"]):active {
+    transform: translateY(1px);
+  }
+}
+
+/* react-colorful — make it feel modern (rounded, no harsh edges). */
+.react-colorful {
+  width: 100% !important;
+  height: 180px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.react-colorful__saturation {
+  border-radius: 0;
+  border-bottom: none;
+}
+.react-colorful__hue {
+  height: 14px;
+  border-radius: 0;
+}
+.react-colorful__pointer {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+/* Print receipt — strip ALL theme tints and force pure black-on-white.
+   Goes nuclear with `* !important` because Tailwind v4's @layer base
+   declarations were winning over scoped overrides; the body's
+   `@apply bg-background` would otherwise leak the cream theme color
+   onto the printed page when "Background graphics" is on. The receipt
+   article itself only uses text + borders so zeroing colors here is
+   safe — there are no theme-tinted backgrounds inside it we'd want to
+   preserve at print time. */
+@media print {
+  @page { margin: 1.2cm; }
+  html,
+  body,
+  body * {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border-color: #000000 !important;
+    box-shadow: none !important;
+  }
+}

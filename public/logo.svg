@@ -1,0 +1,160 @@
+<svg width="1600" height="320" viewBox="0 0 1600 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .logo-fill {
+        fill: currentColor;
+      }
+
+      .logo-stroke {
+        stroke: currentColor;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+    </style>
+  </defs>
+
+  <!-- LEFT T -->
+  <g class="logo-fill">
+    <rect x="28" y="34" width="126" height="16" rx="3"/>
+    <rect x="83" y="50" width="16" height="176" rx="3"/>
+  </g>
+
+  <!-- E -->
+  <g class="logo-fill">
+    <!-- Top -->
+    <rect x="228" y="38" width="94" height="16" rx="4"/>
+
+    <!-- Middle adjusted -->
+    <rect x="228" y="122" width="94" height="16" rx="4"/>
+
+    <!-- Bottom lowered -->
+    <rect x="228" y="208" width="94" height="16" rx="4"/>
+  </g>
+
+  <!-- CHAIR -->
+  <g class="logo-stroke" stroke-width="8" fill="none">
+
+    <!-- Backrest -->
+    <rect
+      x="468"
+      y="30"
+      width="144"
+      height="92"
+      rx="26"
+      class="logo-fill"
+      stroke="none"
+    />
+
+    <!-- Support rods -->
+    <line x1="492" y1="120" x2="490" y2="145"/>
+    <line x1="588" y1="120" x2="590" y2="145"/>
+
+    <!-- Seat Fill -->
+    <path
+      d="
+        M452 148
+        Q540 128 628 148
+        L628 170
+        Q540 190 452 170
+        Z
+      "
+      class="logo-fill"
+      stroke="none"
+    />
+
+    <!-- Seat Outline -->
+    <path d="M452 148 Q540 128 628 148"/>
+    <path d="M452 170 Q540 190 628 170"/>
+
+    <!-- Seat sides -->
+    <line x1="452" y1="148" x2="452" y2="170"/>
+    <line x1="628" y1="148" x2="628" y2="170"/>
+
+    <!-- Slightly shorter legs -->
+    <line x1="488" y1="178" x2="478" y2="232"/>
+    <line x1="592" y1="178" x2="602" y2="232"/>
+  </g>
+
+  <!-- K -->
+  <g class="logo-fill">
+
+    <!-- Stem -->
+    <rect x="760" y="34" width="16" height="192" rx="2"/>
+
+    <!-- Upper diagonal -->
+    <path d="
+      M776 132
+      L862 34
+      H890
+      L794 142
+      L776 142
+      Z
+    "/>
+
+    <!-- Lower diagonal -->
+    <path d="
+      M776 126
+      H794
+      L896 226
+      H868
+      L776 144
+      Z
+    "/>
+  </g>
+
+  <!-- Ä -->
+  <g class="logo-fill">
+
+    <!-- Accent bar -->
+    <rect x="1009" y="20" width="58" height="12" rx="3"/>
+
+    <!-- A -->
+    <path d="
+      M1040 48
+      L1118 226
+      H1097
+      L1040 92
+      L983 226
+      H962
+      Z
+    "/>
+  </g>
+
+  <!-- R -->
+  <g class="logo-fill">
+
+    <!-- Stem -->
+    <rect x="1214" y="34" width="16" height="192" rx="2"/>
+
+    <!-- Bowl -->
+    <path d="
+      M1230 34
+      H1298
+      Q1354 34 1354 88
+      Q1354 142 1298 142
+      H1230
+      L1230 126
+      H1288
+      Q1334 126 1334 88
+      Q1334 50 1288 50
+      H1230
+      Z
+    "/>
+
+    <!-- Connected diagonal leg -->
+    <path d="
+      M1230 134
+      H1248
+      L1338 226
+      H1314
+      L1230 144
+      Z
+    "/>
+  </g>
+
+  <!-- RIGHT T -->
+  <g class="logo-fill">
+    <rect x="1388" y="34" width="138" height="16" rx="3"/>
+    <rect x="1449" y="50" width="16" height="176" rx="3"/>
+  </g>
+</svg>

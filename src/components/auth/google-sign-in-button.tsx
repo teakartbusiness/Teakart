@@ -1,0 +1,85 @@
+'use client'
+
+import { useState } from 'react'
+import { toast } from 'sonner'
+import { getSupabaseBrowserClient } from '@/lib/supabase/client'
+
+interface Props {
+  /** Where to send the user after Google confirms — falls back to "/". */
+  next?: string
+  /** Inline label override — defaults match auth-page context. */
+  label?: string
+}
+
+/**
+ * "Continue with Google" button.
+ *
+ * Kicks off Supabase's OAuth flow. Supabase handles the redirect to Google,
+ * the consent screen, the redirect back, and the session cookie. By the
+ * time the user lands back on `next`, they're signed in — first-time
+ * sign-ins also create the user row via the `handle_new_user` trigger.
+ *
+ * Setup (one-time, in dashboards — see ops note in the chat for full steps):
+ *   - Google Cloud Console: create an OAuth Client ID; add Supabase's
+ *     callback URL as an authorized redirect.
+ *   - Supabase dashboard: Authentication → Providers → Google → enable +
+ *     paste the Client ID and Secret.
+ */
+export default function GoogleSignInButton({ next, label = 'Continue with Google' }: Props) {
+  const [loading, setLoading] = useState(false)
+
+  async function handleClick() {
+    setLoading(true)
+    const supabase = getSupabaseBrowserClient()
+    const safeNext = next && next.startsWith('/') && !next.startsWith('//') ? next : '/'
+    const redirectTo = `${window.location.origin}/api/auth/callback?next=${encodeURIComponent(safeNext)}`
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo,
+        // Ask Google for a fresh consent every time so we always have a
+        // valid refresh token. Comment this out if you want silent re-auth.
+        queryParams: { access_type: 'offline', prompt: 'consent' },
+      },
+    })
+
+    if (error) {
+      toast.error(error.message)
+      setLoading(false)
+      return
+    }
+    // signInWithOAuth navigates the browser to Google; setLoading(false)
+    // won't fire before unload. Left intentionally.
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      disabled={loading}
+      className="inline-flex w-full items-center justify-center gap-3 rounded-xl border border-border bg-background px-5 py-3 text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+    >
+      <GoogleLogo />
+      {loading ? 'Redirecting…' : label}
+    </button>
+  )
+}
+
+/** Official Google "G" multicolor mark — kept inline so we don't pull in another icon set. */
+function GoogleLogo() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 48 48"
+      width="18"
+      height="18"
+      aria-hidden
+    >
+      <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
+      <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
+      <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
+      <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
+    </svg>
+  )
+}

@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir E:\\\\Apps\\\\Coding\\\\VSCode\\\\Freelance\\\\TeaKart\\\\teakart *)",
+      "Bash(dir \"E:\\\\Apps\\\\Coding\\\\VSCode\\\\Freelance\\\\TeaKart\\\\teakart\\\\src\" /s /b)",
+      "Bash(findstr /v \"node_modules\")",
+      "Bash(pnpm add *)",
+      "Bash(pnpm tsc *)",
+      "Bash(pnpm build *)",
+      "Bash(claude doctor *)",
+      "PowerShell(claude doctor *)",
+      "Bash(findstr /R \"layout\\\\.tsx\")",
+      "Bash(curl -s \"https://teakart.vercel.app/products/chairs/millie-upholstered-chair\")",
+      "Bash(curl -s \"https://teakart.vercel.app/products/chairs/millie-upholstered-chair\" -o \"C:\\\\Users\\\\welcome\\\\AppData\\\\Local\\\\Temp\\\\teakart-prod.html\")",
+      "Read(//c/Users/welcome/AppData/Local/Temp/**)",
+      "Bash(curl -s \"https://teakart.vercel.app/\" -o \"C:\\\\Users\\\\welcome\\\\AppData\\\\Local\\\\Temp\\\\teakart-home.html\")",
+      "Bash(curl -s \"https://teakart.vercel.app/products\" -o \"C:\\\\Users\\\\welcome\\\\AppData\\\\Local\\\\Temp\\\\teakart-products.html\")",
+      "Bash(grep -o -E \"pt-4.{0,2000}aria-label.\\\\\"Go back\\\\\"\" \"C:\\\\Users\\\\welcome\\\\AppData\\\\Local\\\\Temp\\\\teakart-products.html\")",
+      "Bash(grep -o -E \"items-center px-4 pt-4.{0,500}\" \"C:\\\\Users\\\\welcome\\\\AppData\\\\Local\\\\Temp\\\\teakart-prod.html\")",
+      "Bash(grep -oE 'self.__next_f.push\\\\\\(\\\\[1,\"\\(6|7|8|9|a|b|c\\):.{0,800}' \"C:\\\\Users\\\\welcome\\\\AppData\\\\Local\\\\Temp\\\\teakart-prod.html\")",
+      "Bash(grep *)",
+      "Bash(awk '{print $1}')",
+      "PowerShell(Get-ChildItem \"E:\\\\Pics\\\\Misc\\\\Screenshots\" -File | Sort-Object LastWriteTime -Descending | Select-Object -First 2 | ForEach-Object { $_.FullName })"
+    ]
+  }
+}
