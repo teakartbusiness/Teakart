@@ -6,11 +6,11 @@ import { sendWhatsAppText } from './whatsapp';
  * Event notifications — composes email (Resend) + WhatsApp for each store event.
  * Every send is best-effort + env-gated (see lib/resend + lib/whatsapp): nothing
  * here ever throws or blocks the request that triggered it. Admin target is
- * ADMIN_EMAIL + ADMIN_WHATSAPP_NUMBER (each optional — whichever is set is used).
+ * NEXT_PUBLIC_ADMIN_EMAIL + ADMIN_WHATSAPP_NUMBER (each optional — whichever is set is used).
  */
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || '';
-const adminEmail = () => process.env.ADMIN_EMAIL || null;
+const adminEmail = () => process.env.NEXT_PUBLIC_ADMIN_EMAIL || null;
 const adminPhone = () => process.env.ADMIN_WHATSAPP_NUMBER || null;
 const rupees = (n: number) => `₹${n.toLocaleString('en-IN')}`;
 const link = (path: string, label: string) => (SITE ? `<p><a href="${SITE}${path}">${label}</a></p>` : '');

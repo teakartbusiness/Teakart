@@ -33,7 +33,7 @@ export default function HeaderClientArea() {
     const supabase = getSupabaseBrowserClient()
 
     function resolveStaff(u: User | null) {
-      // Single-admin store: only the env ADMIN_EMAIL ("CEO") sees the admin link.
+      // Single-admin store: only the env NEXT_PUBLIC_ADMIN_EMAIL ("CEO") sees the admin link.
       const ceo = process.env.NEXT_PUBLIC_ADMIN_EMAIL
       setIsStaff(!!u && !!ceo && u.email?.toLowerCase() === ceo.toLowerCase())
     }

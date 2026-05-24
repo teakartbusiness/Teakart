@@ -37,8 +37,8 @@ export async function middleware(request: NextRequest) {
   }
 
   if (isAdminRoute) {
-    // Single-admin store: only the env ADMIN_EMAIL ("CEO") may enter /admin.
-    const ceo = process.env.ADMIN_EMAIL?.toLowerCase().trim() || null
+    // Single-admin store: only the env NEXT_PUBLIC_ADMIN_EMAIL ("CEO") may enter /admin.
+    const ceo = process.env.NEXT_PUBLIC_ADMIN_EMAIL?.toLowerCase().trim() || null
     const isCeo = !!user.email && !!ceo && user.email.toLowerCase() === ceo
 
     if (!isCeo) {

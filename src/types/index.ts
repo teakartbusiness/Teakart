@@ -138,7 +138,7 @@ export type ProductReview = {
 
 /**
  * Admin capabilities. This single-admin build grants every capability to the
- * env ADMIN_EMAIL ("CEO") and none to anyone else (see lib/auth/capabilities.ts).
+ * env NEXT_PUBLIC_ADMIN_EMAIL ("CEO") and none to anyone else (see lib/auth/capabilities.ts).
  * The list is retained so admin page guards stay declarative and a multi-role
  * UI can be reintroduced later without rewiring them.
  */

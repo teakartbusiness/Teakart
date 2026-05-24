@@ -12,7 +12,7 @@ function allCapsAccess(userId: string, email: string | null, isCeo: boolean): Vi
 /**
  * Access control, server side.
  *
- * This is a single-admin store: the env ADMIN_EMAIL ("CEO") is the only staff
+ * This is a single-admin store: the env NEXT_PUBLIC_ADMIN_EMAIL ("CEO") is the only staff
  * account and always has every capability. Everyone else is a customer with no
  * admin capabilities. (The capability engine is retained so the multi-role UI
  * can be reintroduced later without rewiring every page guard.)
@@ -24,7 +24,7 @@ function allCapsAccess(userId: string, email: string | null, isCeo: boolean): Vi
 export type ViewerAccess = {
   userId: string
   email: string | null
-  /** The env ADMIN_EMAIL bootstrap super-admin. */
+  /** The env NEXT_PUBLIC_ADMIN_EMAIL bootstrap super-admin. */
   isCeo: boolean
   capabilities: Set<Capability>
   has: (cap: Capability) => boolean
@@ -33,7 +33,7 @@ export type ViewerAccess = {
 }
 
 function ceoEmail(): string | null {
-  return process.env.ADMIN_EMAIL?.toLowerCase().trim() || null
+  return process.env.NEXT_PUBLIC_ADMIN_EMAIL?.toLowerCase().trim() || null
 }
 
 /** Resolve the current viewer's access. Memoized per request. */
@@ -78,7 +78,7 @@ export async function isStaffViewer(): Promise<boolean> {
   return !!access && access.isStaff
 }
 
-/** True if the current viewer is the env ADMIN_EMAIL super-admin. */
+/** True if the current viewer is the env NEXT_PUBLIC_ADMIN_EMAIL super-admin. */
 export async function isCeoViewer(): Promise<boolean> {
   const access = await getViewerAccess()
   return !!access && access.isCeo
