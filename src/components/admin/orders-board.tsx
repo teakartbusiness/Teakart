@@ -1,34 +1,38 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
-import Image from 'next/image'
-import Link from 'next/link'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Search } from 'lucide-react'
-import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
-import StatusSelect from './status-select'
+import { StatusBadge } from './status-badge'
+import OrderDetailDialog from './order-detail-dialog'
 import { summarizeItems, type OrderItemWithProduct } from '@/lib/orders'
-import { nextOrderStatuses } from '@/lib/status-progression'
-import type { Order, OrderStatus } from '@/types'
+import type { Order, OrderStatus, OrderStatusHistory } from '@/types'
 
-type OrderRow = Order & {
+export type AdminOrderRow = Order & {
   items?: OrderItemWithProduct[]
-  user: { full_name: string | null } | null
+  user: { full_name: string | null; phone: string | null } | null
+  address: { full_address: string; city: string; state: string; pincode: string } | null
+  order_status_history: OrderStatusHistory[]
 }
 
-const STATUSES: OrderStatus[] = ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled']
+type Segment = 'active' | 'complete'
 
-type StatusFilter = OrderStatus | 'all'
+// "Active" = still needs a move through the pipeline; "Complete" = terminal.
+const SEGMENT_STATUSES: Record<Segment, OrderStatus[]> = {
+  active: ['pending', 'confirmed', 'shipped'],
+  complete: ['delivered', 'cancelled'],
+}
 
-const FILTER_LABELS: Record<StatusFilter, string> = {
-  all: 'All',
+const STATUS_LABELS: Record<OrderStatus, string> = {
   pending: 'Pending',
   confirmed: 'Confirmed',
   shipped: 'Shipped',
   delivered: 'Delivered',
   cancelled: 'Cancelled',
 }
+
+type StatusFilter = OrderStatus | 'all'
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-IN', {
@@ -38,41 +42,44 @@ function formatDate(iso: string): string {
   })
 }
 
-export default function OrdersBoard({ initial }: { initial: OrderRow[] }) {
+export default function OrdersBoard({ initial }: { initial: AdminOrderRow[] }) {
   const router = useRouter()
-  const [orders, setOrders] = useState<OrderRow[]>(initial)
-  // Keep in step with fresh server data after router.refresh() (e.g. once a
-  // status update commits) — useState only seeds from `initial` on mount.
-  useEffect(() => {
+  const [orders, setOrders] = useState<AdminOrderRow[]>(initial)
+  // Re-sync with fresh server data after router.refresh() (new `initial`
+  // reference). Adjusting state during render is React's recommended pattern
+  // for deriving from a changed prop — no effect, no cascading render.
+  const [prevInitial, setPrevInitial] = useState(initial)
+  if (initial !== prevInitial) {
+    setPrevInitial(initial)
     setOrders(initial)
-  }, [initial])
-  const [activeStatus, setActiveStatus] = useState<StatusFilter>('all')
+  }
+
+  const [segment, setSegment] = useState<Segment>('active')
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [search, setSearch] = useState('')
-  const [updatingId, setUpdatingId] = useState<string | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
 
   const counts = useMemo(() => {
-    const c: Record<StatusFilter, number> = {
-      all: orders.length,
+    const c: Record<OrderStatus, number> = {
       pending: 0,
       confirmed: 0,
       shipped: 0,
       delivered: 0,
       cancelled: 0,
     }
-    for (const o of orders) {
-      c[o.status]++
-    }
+    for (const o of orders) c[o.status]++
     return c
   }, [orders])
+
+  const segmentStatuses = SEGMENT_STATUSES[segment]
+  const segmentTotal = segmentStatuses.reduce((acc, s) => acc + counts[s], 0)
 
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase()
     return orders.filter((o) => {
-      if (activeStatus !== 'all' && o.status !== activeStatus) {
-        return false
-      }
-
-      // Search filter
+      const inSegment = segmentStatuses.includes(o.status)
+      if (!inSegment) return false
+      if (statusFilter !== 'all' && o.status !== statusFilter) return false
       if (!q) return true
       const itemMatch =
         o.items?.some(
@@ -86,60 +93,91 @@ export default function OrdersBoard({ initial }: { initial: OrderRow[] }) {
         itemMatch
       )
     })
-  }, [orders, activeStatus, search])
+  }, [orders, segmentStatuses, statusFilter, search])
 
-  async function updateStatus(orderId: string, newStatus: OrderStatus) {
-    const previous = orders
-    setUpdatingId(orderId)
+  const selected = useMemo(
+    () => orders.find((o) => o.id === selectedId) ?? null,
+    [orders, selectedId],
+  )
 
-    // Optimistic update — revert on failure.
+  function switchSegment(next: Segment) {
+    setSegment(next)
+    setStatusFilter('all')
+  }
+
+  function handleUpdated(patch: {
+    id: string
+    status: OrderStatus
+    estimated_delivery_date: string | null
+    order_status_history: OrderStatusHistory[]
+  }) {
     setOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
+      prev.map((o) =>
+        o.id === patch.id
+          ? {
+              ...o,
+              status: patch.status,
+              estimated_delivery_date: patch.estimated_delivery_date,
+              order_status_history: patch.order_status_history,
+            }
+          : o,
+      ),
     )
-
-    const res = await fetch(`/api/orders/${orderId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: newStatus }),
-    })
-
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}))
-      toast.error(body?.error ?? 'Failed to update status')
-      setOrders(previous)
-    } else {
-      toast.success(`Order marked as ${newStatus}.`)
-      router.refresh()
-    }
-
-    setUpdatingId(null)
+    // Re-sync server-derived counts (e.g. sidebar pending badges).
+    router.refresh()
   }
 
   return (
-    <div className="space-y-6">
-      {/* Status tabs */}
-      <div className="-mb-px flex gap-1 overflow-x-auto border-b border-border">
-        {(['all', 'pending', 'confirmed', 'shipped', 'delivered', 'cancelled'] as StatusFilter[]).map((s) => (
-          <button
-            key={s}
-            type="button"
-            onClick={() => setActiveStatus(s)}
-            className={cn(
-              'whitespace-nowrap border-b-2 px-3 py-2 text-sm font-medium transition-colors',
-              activeStatus === s
-                ? 'border-foreground text-foreground'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            )}
-          >
-            {FILTER_LABELS[s]}
-            <span className="ml-1.5 text-xs text-text-subtle">({counts[s]})</span>
-          </button>
-        ))}
+    <div className="space-y-5">
+      {/* Active vs Complete — primary split */}
+      <div className="inline-flex rounded-xl border border-border bg-surface-muted p-1">
+        {(['active', 'complete'] as Segment[]).map((s) => {
+          const total = SEGMENT_STATUSES[s].reduce((acc, st) => acc + counts[st], 0)
+          return (
+            <button
+              key={s}
+              type="button"
+              onClick={() => switchSegment(s)}
+              className={cn(
+                'rounded-lg px-4 py-1.5 text-sm font-medium capitalize transition-colors',
+                segment === s
+                  ? 'bg-card text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              {s}
+              <span className="ml-1.5 text-xs text-text-subtle">({total})</span>
+            </button>
+          )
+        })}
       </div>
 
-      {/* Search — generous pt-6 to clearly separate from the tab row above,
-          tighter pb-1 since the orders table below already has its own border. */}
-      <div className="pt-6 pb-1">
+      {/* Per-status sub-tabs within the active segment */}
+      <div className="-mb-px flex gap-1 overflow-x-auto border-b border-border">
+        {(['all', ...segmentStatuses] as StatusFilter[]).map((s) => {
+          const label = s === 'all' ? `All ${segment}` : STATUS_LABELS[s]
+          const count = s === 'all' ? segmentTotal : counts[s]
+          return (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setStatusFilter(s)}
+              className={cn(
+                'whitespace-nowrap border-b-2 px-3 py-2 text-sm font-medium transition-colors',
+                statusFilter === s
+                  ? 'border-foreground text-foreground'
+                  : 'border-transparent text-muted-foreground hover:text-foreground',
+              )}
+            >
+              {label}
+              <span className="ml-1.5 text-xs text-text-subtle">({count})</span>
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Search — extra top padding so it sits clear of the tab row above. */}
+      <div className="pt-3 sm:pt-4">
         <div className="relative max-w-md">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-text-subtle" />
           <input
@@ -154,9 +192,7 @@ export default function OrdersBoard({ initial }: { initial: OrderRow[] }) {
 
       {visible.length === 0 ? (
         <div className="rounded-lg border border-dashed border-border bg-surface-muted px-6 py-12 text-center text-sm text-muted-foreground">
-          {search.trim()
-            ? `No orders match "${search.trim()}".`
-            : 'No orders in this section.'}
+          {search.trim() ? `No orders match "${search.trim()}".` : 'No orders in this section.'}
         </div>
       ) : (
         <div className="overflow-x-auto rounded-lg border border-border bg-card">
@@ -175,47 +211,34 @@ export default function OrdersBoard({ initial }: { initial: OrderRow[] }) {
               {visible.map((order) => {
                 const summary = summarizeItems(order.items)
                 return (
-                  <tr key={order.id} className="hover:bg-muted/60">
-                    <td className="px-4 py-3">
-                      <Link
-                        href={`/admin/orders/${order.id}`}
-                        className="font-mono text-xs text-foreground hover:underline"
-                      >
-                        #{order.id.slice(0, 8)}
-                      </Link>
+                  <tr
+                    key={order.id}
+                    onClick={() => setSelectedId(order.id)}
+                    className="cursor-pointer transition-colors hover:bg-muted/60"
+                  >
+                    <td className="px-4 py-3 font-mono text-xs text-foreground">
+                      #{order.id.slice(0, 8)}
                     </td>
                     <td className="px-4 py-3 text-foreground">
-                      <Link href={`/admin/orders/${order.id}`} className="hover:underline">
-                        {order.user?.full_name ?? (
-                          <span className="font-mono text-xs text-muted-foreground">
-                            {order.user_id.slice(0, 8)}
-                          </span>
-                        )}
-                      </Link>
+                      {order.user?.full_name ?? (
+                        <span className="font-mono text-xs text-muted-foreground">
+                          {order.user_id.slice(0, 8)}
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-foreground">
-                      <Link href={`/admin/orders/${order.id}`} className="hover:underline">
-                        {summary.primaryName}
-                        {summary.extraCount > 0 && (
-                          <span className="ml-1 text-xs text-muted-foreground">
-                            +{summary.extraCount}
-                          </span>
-                        )}
-                      </Link>
+                      {summary.primaryName}
+                      {summary.extraCount > 0 && (
+                        <span className="ml-1 text-xs text-muted-foreground">+{summary.extraCount}</span>
+                      )}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-right tabular-nums text-foreground">
+                    <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums text-foreground">
                       ₹{order.amount_paid.toLocaleString('en-IN')}
                     </td>
                     <td className="px-4 py-3">
-                      <StatusSelect
-                        value={order.status}
-                        options={nextOrderStatuses(order.status)}
-                        onChange={(next) => updateStatus(order.id, next)}
-                        disabled={updatingId === order.id || order.status === 'cancelled' || order.status === 'delivered'}
-                        ariaLabel={`Status for order ${order.id.slice(0, 8)}`}
-                      />
+                      <StatusBadge status={order.status} />
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-foreground">
+                    <td className="whitespace-nowrap px-4 py-3 text-foreground">
                       {formatDate(order.created_at)}
                     </td>
                   </tr>
@@ -225,6 +248,15 @@ export default function OrdersBoard({ initial }: { initial: OrderRow[] }) {
           </table>
         </div>
       )}
+
+      <OrderDetailDialog
+        key={selected?.id ?? 'none'}
+        order={selected}
+        onOpenChange={(open) => {
+          if (!open) setSelectedId(null)
+        }}
+        onUpdated={handleUpdated}
+      />
     </div>
   )
 }

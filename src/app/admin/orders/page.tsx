@@ -1,26 +1,24 @@
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { guardPage } from '@/lib/auth/capabilities'
-import OrdersBoard from '@/components/admin/orders-board'
-import { ORDER_ITEMS_SELECT, type OrderItemWithProduct } from '@/lib/orders'
-import type { Order } from '@/types'
+import OrdersBoard, { type AdminOrderRow } from '@/components/admin/orders-board'
+import { ORDER_ITEMS_SELECT } from '@/lib/orders'
 
 export const dynamic = 'force-dynamic'
-
-type OrderRow = Order & {
-  items?: OrderItemWithProduct[]
-  user: { full_name: string | null } | null
-}
 
 export default async function AdminOrdersPage() {
   await guardPage('orders.view')
   const supabase = getSupabaseAdminClient()
 
+  // The board renders a full order-detail dialog from this data (no per-row
+  // fetch), so we embed address + phone + status history here as well.
   const { data: orders, error } = await supabase
     .from('orders')
     .select(`
       *,
       ${ORDER_ITEMS_SELECT},
-      user:users ( full_name )
+      user:users ( full_name, phone ),
+      address:addresses ( full_address, city, state, pincode ),
+      order_status_history ( id, order_id, status, note, created_at )
     `)
     .order('created_at', { ascending: false })
 
@@ -32,7 +30,7 @@ export default async function AdminOrdersPage() {
     )
   }
 
-  const list = (orders ?? []) as OrderRow[]
+  const list = (orders ?? []) as AdminOrderRow[]
 
   return (
     <div className="space-y-6">

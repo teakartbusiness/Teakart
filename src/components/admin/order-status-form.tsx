@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { nextOrderStatuses } from '@/lib/status-progression'
+import DeliveryDateInput, { todayPlus } from './delivery-date-input'
 import type { OrderStatus } from '@/types'
 
 interface Props {
@@ -24,7 +25,7 @@ export default function OrderStatusForm({
   const STATUSES = nextOrderStatuses(currentStatus)
   const [status, setStatus] = useState<OrderStatus>(currentStatus)
   const [note, setNote] = useState('')
-  const [estDelivery, setEstDelivery] = useState<string>(currentEstimatedDelivery ?? '')
+  const [estDelivery, setEstDelivery] = useState<string>(currentEstimatedDelivery || todayPlus(7))
   const [submitting, setSubmitting] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
@@ -82,23 +83,16 @@ export default function OrderStatusForm({
         <label className="block text-sm font-medium text-foreground mb-1">
           Estimated delivery date <span className="text-text-subtle font-normal">(optional)</span>
         </label>
-        <div className="flex items-center gap-2">
-          <input
-            type="date"
-            value={estDelivery}
-            onChange={(e) => setEstDelivery(e.target.value)}
-            className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-1 focus:ring-ring bg-card text-sm"
-          />
-          {estDelivery && (
-            <button
-              type="button"
-              onClick={() => setEstDelivery('')}
-              className="shrink-0 rounded-md px-2.5 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted"
-            >
-              Clear
-            </button>
-          )}
-        </div>
+        <DeliveryDateInput value={estDelivery} onChange={setEstDelivery} disabled={submitting} />
+        {estDelivery && (
+          <button
+            type="button"
+            onClick={() => setEstDelivery('')}
+            className="mt-1.5 text-xs font-medium text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
+          >
+            Clear date
+          </button>
+        )}
         <p className="mt-1 text-xs text-muted-foreground">
           Shown to the customer on their order. Leave blank to hide it.
         </p>

@@ -3,6 +3,7 @@ import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { hasCapability } from '@/lib/auth/capabilities'
 import { isAllowedOrderTransition } from '@/lib/status-progression'
+import { createNotification, orderStatusTitle } from '@/lib/notifications'
 import type { OrderStatus } from '@/types'
 
 export async function GET(
@@ -132,6 +133,17 @@ export async function PATCH(
 
   if (fetchError || !updated) {
     return NextResponse.json({ error: 'Order not found' }, { status: 404 })
+  }
+
+  // Notify the customer in-app of the new status (best-effort; never blocks).
+  if (body.status !== undefined && updated.user_id) {
+    await createNotification(admin, {
+      userId: updated.user_id as string,
+      type: 'order_status',
+      title: orderStatusTitle(body.status),
+      body: `Order #${id.slice(0, 8)} is now ${body.status}.`,
+      href: `/account/orders/${id}`,
+    })
   }
 
   const history = (updated.order_status_history as { created_at: string }[])

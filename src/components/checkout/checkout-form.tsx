@@ -255,7 +255,32 @@ export function CheckoutForm({ mode, lines, buyNowProduct, buyNowVariant }: Chec
         description,
         order_id: data.razorpayOrderId,
         handler: (response) => {
-          router.push(`/order/${response.razorpay_order_id}`);
+          // Verify the payment server-side and create the order synchronously
+          // so /order/[id] never 404s on the webhook race (and so the flow is
+          // testable on localhost without a public tunnel). The webhook is the
+          // idempotent backstop. On any failure, fall back to opening the page
+          // by the Razorpay order id — the webhook will have created the order.
+          (async () => {
+            try {
+              const verifyRes = await fetch('/api/checkout/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                }),
+              });
+              if (verifyRes.ok) {
+                const verifyData = (await verifyRes.json()) as { orderId: string };
+                router.push(`/order/${verifyData.orderId}`);
+                return;
+              }
+            } catch (err) {
+              console.error('[checkout] verify failed, falling back', err);
+            }
+            router.push(`/order/${response.razorpay_order_id}`);
+          })();
         },
         modal: {
           ondismiss: () => {

@@ -2,6 +2,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import HeaderClientArea from "./header-client-area"
 import NavShopIcons from "./nav-shop-icons"
+import NotificationBell from "./notification-bell"
 import ThemeToggle from "./theme-toggle"
 import Logo from "./logo"
 
@@ -38,6 +39,9 @@ export default function Header() {
               <Link href="/products">Shop</Link>
             </Button>
           </nav>
+          {/* Visible on every breakpoint (incl. mobile, next to the hamburger);
+              renders nothing for signed-out visitors. */}
+          <NotificationBell />
           <HeaderClientArea />
         </div>
       </div>

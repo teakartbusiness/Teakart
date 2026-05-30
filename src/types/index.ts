@@ -134,6 +134,26 @@ export type ProductReview = {
   user?: { full_name: string | null } | null
 }
 
+/* ----- In-site notifications ----- */
+
+export type NotificationType =
+  | 'order_placed'
+  | 'order_status'
+  | 'refund_status'
+  | 'back_in_stock'
+
+export type Notification = {
+  id: string
+  user_id: string
+  type: NotificationType
+  title: string
+  body: string | null
+  /** Where clicking the notification navigates the customer. */
+  href: string
+  read_at: string | null
+  created_at: string
+}
+
 // --- Capabilities (admin access control) -------------------------------------
 
 /**

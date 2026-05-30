@@ -62,6 +62,8 @@ export default async function OrderDetailPage({
   const estimatedDelivery = formatDeliveryDate(
     (order as { estimated_delivery_date?: string | null }).estimated_delivery_date,
   )
+  const paymentId =
+    (order as { razorpay_payment_id?: string | null }).razorpay_payment_id ?? null
 
   // Existing reviews + review settings, so the review panel can prefill the
   // modal for editing and enforce the per-review image cap.
@@ -106,6 +108,11 @@ export default async function OrderDetailPage({
         <p className="font-mono text-xs text-muted-foreground">
           Order #{order.id.slice(0, 8).toUpperCase()}
         </p>
+        {paymentId && (
+          <p className="mt-1 font-mono text-xs text-muted-foreground break-all">
+            Payment ref: {paymentId}
+          </p>
+        )}
       </div>
 
       {/* Hero card — multi-item collage + order total. */}
