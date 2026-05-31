@@ -9,7 +9,7 @@ import { useShopStore } from '@/lib/shop-store'
 import type { HydratedCartLine } from '@/lib/shop-store'
 
 export default function CartView() {
-  const { cart, loading, setQuantity, removeFromCart } = useShopStore()
+  const { cart, loading, setQuantity, removeFromCart, moveCartToWishlist } = useShopStore()
 
   if (loading) {
     return <div className="h-32 animate-pulse rounded-2xl bg-muted" />
@@ -41,6 +41,7 @@ export default function CartView() {
             line={line}
             onChangeQty={(q) => setQuantity(line.product_id, line.variant_label, q)}
             onRemove={() => removeFromCart(line.product_id, line.variant_label)}
+            onMoveToWishlist={() => moveCartToWishlist(line.product_id, line.variant_label)}
           />
         ))}
       </ul>
@@ -80,10 +81,12 @@ function CartRow({
   line,
   onChangeQty,
   onRemove,
+  onMoveToWishlist,
 }: {
   line: HydratedCartLine
   onChangeQty: (next: number) => Promise<void>
   onRemove: () => Promise<void>
+  onMoveToWishlist: () => Promise<void>
 }) {
   const [pending, setPending] = useState(false)
   const product = line.product
@@ -111,6 +114,19 @@ function CartRow({
     setPending(true)
     try {
       await onRemove()
+    } catch (err) {
+      toast.error((err as Error).message)
+    } finally {
+      setPending(false)
+    }
+  }
+
+  async function moveToWishlist() {
+    if (pending) return
+    setPending(true)
+    try {
+      await onMoveToWishlist()
+      toast.success('Moved to wishlist')
     } catch (err) {
       toast.error((err as Error).message)
     } finally {
@@ -198,15 +214,26 @@ function CartRow({
         <p className="text-sm font-semibold tabular-nums text-foreground">
           ₹{line.line_total.toLocaleString('en-IN')}
         </p>
-        <button
-          type="button"
-          onClick={remove}
-          disabled={pending}
-          aria-label="Remove from cart"
-          className="text-xs text-muted-foreground hover:text-destructive disabled:opacity-50"
-        >
-          <Trash2 className="inline size-3.5" />
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={moveToWishlist}
+            disabled={pending}
+            className="text-xs text-muted-foreground hover:text-primary transition-colors disabled:opacity-50"
+          >
+            Move to wishlist
+          </button>
+          <span className="text-xs text-border">|</span>
+          <button
+            type="button"
+            onClick={remove}
+            disabled={pending}
+            aria-label="Remove from cart"
+            className="text-xs text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
+          >
+            <Trash2 className="inline size-3.5" />
+          </button>
+        </div>
       </div>
     </li>
   )

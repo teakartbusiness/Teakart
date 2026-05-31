@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import type { CartLine, Product, Variant } from '@/types'
+import { normalizeWishlist, loadHydrated as loadHydratedWishlist } from '../wishlist/route'
 
 const MAX_ITEMS = 20
 const MAX_QUANTITY_PER_LINE = 99
@@ -36,7 +37,7 @@ function normalizeCart(raw: unknown): CartLine[] {
   return Array.from(seen.values()).slice(0, MAX_ITEMS)
 }
 
-async function loadHydrated(supabase: Awaited<ReturnType<typeof getSupabaseServerClient>>, userId: string) {
+export async function loadHydrated(supabase: Awaited<ReturnType<typeof getSupabaseServerClient>>, userId: string) {
   const { data: row } = await supabase
     .from('users')
     .select('cart')
@@ -113,8 +114,8 @@ export async function GET() {
 }
 
 /**
- * PUT — replace the entire cart. Body: { items: CartLine[] }.
- * Returns the hydrated cart on success.
+ * PUT — replace the entire cart. Body: { items: CartLine[], wishlist?: WishlistEntry[] }.
+ * Returns the hydrated cart (+ wishlist if requested) on success.
  */
 export async function PUT(request: NextRequest) {
   const supabase = await getSupabaseServerClient()
@@ -123,7 +124,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  let body: { items?: unknown }
+  let body: { items?: unknown; wishlist?: unknown }
   try {
     body = await request.json()
   } catch {
@@ -131,10 +132,25 @@ export async function PUT(request: NextRequest) {
   }
 
   const cart = normalizeCart(body.items)
-  const { error } = await supabase.from('users').update({ cart }).eq('id', user.id)
+  const updatePayload: Record<string, any> = { cart }
+  const hasWishlist = body.wishlist !== undefined
+  if (hasWishlist) {
+    updatePayload.wishlist = normalizeWishlist(body.wishlist)
+  }
+
+  const { error } = await supabase.from('users').update(updatePayload).eq('id', user.id)
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
-  const hydrated = await loadHydrated(supabase, user.id)
-  return NextResponse.json(hydrated)
+
+  const hydratedCart = await loadHydrated(supabase, user.id)
+  if (hasWishlist) {
+    const hydratedWishlist = await loadHydratedWishlist(supabase, user.id)
+    return NextResponse.json({
+      ...hydratedCart,
+      wishlist: hydratedWishlist,
+    })
+  }
+
+  return NextResponse.json(hydratedCart)
 }

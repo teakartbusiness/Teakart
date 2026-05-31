@@ -154,7 +154,7 @@ function CompleteProfileForm() {
             autoComplete="tel"
           />
           <p className="text-xs text-muted-foreground">
-            We&apos;ll use this to send order updates over WhatsApp.
+            Can be used to contact you if needed.
           </p>
         </div>
 

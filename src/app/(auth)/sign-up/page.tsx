@@ -88,9 +88,6 @@ export default function SignUpPage() {
         <h1 className="font-display text-3xl font-semibold tracking-tight text-foreground">
           Create your account
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          One account for orders, addresses, and updates.
-        </p>
       </div>
 
       <div className="mt-8">

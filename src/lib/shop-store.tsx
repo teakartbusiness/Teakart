@@ -54,6 +54,8 @@ interface ShopContextValue {
   removeFromCart: (productId: string, variantLabel: string | null) => Promise<void>
   isInWishlist: (productId: string) => boolean
   toggleWishlist: (productId: string) => Promise<boolean>
+  moveWishlistToCart: (productId: string, variantLabel: string | null, quantity?: number) => Promise<void>
+  moveCartToWishlist: (productId: string, variantLabel: string | null) => Promise<void>
 }
 
 const ShopContext = createContext<ShopContextValue | null>(null)
@@ -130,8 +132,11 @@ export function ShopStoreProvider({ children }: { children: React.ReactNode }) {
       const data = await res.json().catch(() => ({}))
       throw new Error(data?.error ?? 'Could not update cart')
     }
-    const next = (await res.json()) as CartState
+    const next = (await res.json()) as CartState & { wishlist?: WishlistState }
     setCart({ items: next.items ?? [], subtotal: next.subtotal ?? 0 })
+    if (next.wishlist) {
+      setWishlist({ items: next.wishlist.items ?? [] })
+    }
     return next
   }, [])
 
@@ -214,6 +219,78 @@ export function ShopStoreProvider({ children }: { children: React.ReactNode }) {
     [wishlist.items],
   )
 
+  const moveWishlistToCart = useCallback(
+    async (productId: string, variantLabel: string | null = null, quantity = 1) => {
+      const nextWishlist = wishlist.items
+        .filter((e) => e.product_id !== productId)
+        .map((e) => ({ product_id: e.product_id }))
+
+      const nextCart = cart.items.map((it) => ({
+        product_id: it.product_id,
+        variant_label: it.variant_label,
+        quantity: it.quantity,
+      })) as CartLine[]
+      const key = (p: string, v: string | null) => `${p}::${v ?? ''}`
+      const idx = nextCart.findIndex((l) => key(l.product_id, l.variant_label) === key(productId, variantLabel))
+      if (idx >= 0) {
+        nextCart[idx] = { ...nextCart[idx], quantity: nextCart[idx].quantity + quantity }
+      } else {
+        nextCart.push({ product_id: productId, variant_label: variantLabel, quantity })
+      }
+
+      const res = await fetch('/api/cart', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: nextCart, wishlist: nextWishlist }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data?.error ?? 'Could not move item to cart')
+      }
+      const next = (await res.json()) as CartState & { wishlist?: WishlistState }
+      setCart({ items: next.items ?? [], subtotal: next.subtotal ?? 0 })
+      if (next.wishlist) {
+        setWishlist({ items: next.wishlist.items ?? [] })
+      }
+    },
+    [cart.items, wishlist.items],
+  )
+
+  const moveCartToWishlist = useCallback(
+    async (productId: string, variantLabel: string | null) => {
+      const nextCart = cart.items
+        .filter(
+          (it) =>
+            !(
+              it.product_id === productId &&
+              (it.variant_label ?? null) === (variantLabel ?? null)
+            ),
+        )
+        .map((it) => ({ product_id: it.product_id, variant_label: it.variant_label, quantity: it.quantity }))
+
+      const nextWishlist = wishlist.items.map((e) => ({ product_id: e.product_id }))
+      if (!nextWishlist.some((e) => e.product_id === productId)) {
+        nextWishlist.push({ product_id: productId })
+      }
+
+      const res = await fetch('/api/cart', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: nextCart, wishlist: nextWishlist }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data?.error ?? 'Could not move item to wishlist')
+      }
+      const next = (await res.json()) as CartState & { wishlist?: WishlistState }
+      setCart({ items: next.items ?? [], subtotal: next.subtotal ?? 0 })
+      if (next.wishlist) {
+        setWishlist({ items: next.wishlist.items ?? [] })
+      }
+    },
+    [cart.items, wishlist.items],
+  )
+
   const cartCount = useMemo(
     () => cart.items.filter((it) => it.available).reduce((acc, it) => acc + it.quantity, 0),
     [cart.items],
@@ -234,6 +311,8 @@ export function ShopStoreProvider({ children }: { children: React.ReactNode }) {
       removeFromCart,
       isInWishlist,
       toggleWishlist,
+      moveWishlistToCart,
+      moveCartToWishlist,
     }),
     [
       cart,
@@ -248,6 +327,8 @@ export function ShopStoreProvider({ children }: { children: React.ReactNode }) {
       removeFromCart,
       isInWishlist,
       toggleWishlist,
+      moveWishlistToCart,
+      moveCartToWishlist,
     ],
   )
 

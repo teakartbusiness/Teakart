@@ -8,7 +8,7 @@ import { toast } from 'sonner'
 import { useShopStore } from '@/lib/shop-store'
 
 export default function WishlistView() {
-  const { wishlist, loading, toggleWishlist, addToCart } = useShopStore()
+  const { wishlist, loading, toggleWishlist, moveWishlistToCart } = useShopStore()
   const [busy, setBusy] = useState<string | null>(null)
 
   if (loading) {
@@ -41,8 +41,8 @@ export default function WishlistView() {
         toast.error('Open the product to choose a variant.')
         return
       }
-      await addToCart(productId, null, 1)
-      toast.success('Added to cart')
+      await moveWishlistToCart(productId, null, 1)
+      toast.success('Moved to cart')
     } catch (err) {
       toast.error((err as Error).message)
     } finally {

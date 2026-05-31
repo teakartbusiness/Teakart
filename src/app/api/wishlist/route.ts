@@ -11,7 +11,7 @@ type HydratedEntry = WishlistEntry & {
   } | null
 }
 
-function normalizeWishlist(raw: unknown): WishlistEntry[] {
+export function normalizeWishlist(raw: unknown): WishlistEntry[] {
   if (!Array.isArray(raw)) return []
   const seen = new Set<string>()
   const out: WishlistEntry[] = []
@@ -27,7 +27,7 @@ function normalizeWishlist(raw: unknown): WishlistEntry[] {
   return out
 }
 
-async function loadHydrated(
+export async function loadHydrated(
   supabase: Awaited<ReturnType<typeof getSupabaseServerClient>>,
   userId: string,
 ): Promise<{ items: HydratedEntry[] }> {
